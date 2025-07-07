@@ -24,10 +24,13 @@ func main() {
 			fmt.Println("inputとoutputを指定してください")
 			os.Exit(1)
 		}
-		parse.ParseLog(*inputPath, *outputDir)
+		err := parse.ParseLog(*inputPath, *outputDir)
+		if err != nil {
+			fmt.Println("ParseLogでエラー発生:", err)
+			os.Exit(1)
+		}
 	default:
 		fmt.Println("対応していないサブコマンドです")
 		os.Exit(1)
 	}
-
 }
