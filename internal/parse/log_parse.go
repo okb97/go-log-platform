@@ -2,24 +2,26 @@ package parse
 
 import (
 	"encoding/csv"
+	"encoding/json"
 	"fmt"
 	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/okb97/go-log-platform/internal/model"
 )
 
-func ParseLog(inputPath string, outputDir string) error {
+func ParseLog(inputPath string) ([]model.LogEntry, error) {
 	file, err := os.Open(inputPath)
 	if err != nil {
-		return fmt.Errorf("ファイルオープン失敗: %w", err)
+		return nil, fmt.Errorf("ファイルオープン失敗: %w", err)
 	}
 	defer file.Close()
 
 	reader := csv.NewReader(file)
 	records, err := reader.ReadAll()
 	if err != nil {
-		return fmt.Errorf("CSV読み込み失敗: %w", err)
+		return nil, fmt.Errorf("CSV読み込み失敗: %w", err)
 	}
 
 	layout := "2006-01-02 15:04:05"
@@ -43,5 +45,26 @@ func ParseLog(inputPath string, outputDir string) error {
 		})
 	}
 	//fmt.Printf("%+v\n", logs)
+	return logs, nil
+}
+
+func SaveParseLog(logs []model.LogEntry, outputDir string) error {
+	if err := os.MkdirAll(outputDir, 0755); err != nil {
+		return fmt.Errorf("出力ディレクトリ作成失敗; %w", err)
+	}
+	today := time.Now().Format("2006-01-02_15:04:05")
+	outputPath := filepath.Join(outputDir, fmt.Sprintf("parsed_logs_%s.json", today))
+	file, err := os.Create(outputPath)
+	if err != nil {
+		return fmt.Errorf("JSONファイル作成:%w", err)
+	}
+	defer file.Close()
+
+	encoder := json.NewEncoder(file)
+	encoder.SetIndent("", " ")
+	if err := encoder.Encode(logs); err != nil {
+		return fmt.Errorf("JSONエンコード失敗: %w", err)
+	}
+	fmt.Printf("ログを%sに保存しました\n", outputPath)
 	return nil
 }

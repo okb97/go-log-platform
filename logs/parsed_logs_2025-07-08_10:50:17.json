@@ -1,0 +1,17 @@
+[
+ {
+  "TimeStamp": "2025-07-07T10:00:00Z",
+  "Level": "INFO",
+  "Message": "User logged in successfully"
+ },
+ {
+  "TimeStamp": "2025-07-07T10:05:10Z",
+  "Level": "WARN",
+  "Message": "Low disk space warning"
+ },
+ {
+  "TimeStamp": "2025-07-07T10:10:22Z",
+  "Level": "ERROR",
+  "Message": "Failed to open file config.yaml"
+ }
+]
