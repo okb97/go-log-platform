@@ -24,9 +24,13 @@ func main() {
 			fmt.Println("inputとoutputを指定してください")
 			os.Exit(1)
 		}
-		err := parse.ParseLog(*inputPath, *outputDir)
+		logs, err := parse.ParseLog(*inputPath)
 		if err != nil {
 			fmt.Println("ParseLogでエラー発生:", err)
+			os.Exit(1)
+		}
+		if err := parse.SaveParseLog(logs, *outputDir); err != nil {
+			fmt.Println("保存失敗：", err)
 			os.Exit(1)
 		}
 	default:
