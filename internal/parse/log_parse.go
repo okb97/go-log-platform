@@ -49,11 +49,14 @@ func ParseLog(inputPath string) ([]model.LogEntry, error) {
 }
 
 func SaveParseLog(logs []model.LogEntry, outputDir string) error {
-	if err := os.MkdirAll(outputDir, 0755); err != nil {
+	dateDir := time.Now().Format("2006-01-02")
+	fullDir := filepath.Join(outputDir, dateDir)
+
+	if err := os.MkdirAll(fullDir, 0755); err != nil {
 		return fmt.Errorf("出力ディレクトリ作成失敗; %w", err)
 	}
 	today := time.Now().Format("2006-01-02_15:04:05")
-	outputPath := filepath.Join(outputDir, fmt.Sprintf("parsed_logs_%s.json", today))
+	outputPath := filepath.Join(fullDir, fmt.Sprintf("parsed_logs_%s.json", today))
 	file, err := os.Create(outputPath)
 	if err != nil {
 		return fmt.Errorf("JSONファイル作成:%w", err)
