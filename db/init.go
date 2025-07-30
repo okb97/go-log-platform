@@ -1,40 +1,31 @@
 package db
 
 import (
-	"database/sql"
 	"fmt"
 	"log"
 
-	_ "github.com/mattn/go-sqlite3"
+	"github.com/okb97/go-log-platform/internal/model"
+	"gorm.io/driver/sqlite"
+	"gorm.io/gorm"
 )
 
 const dbPath = "task.db"
 
-var DB *sql.DB
+var DB *gorm.DB
 
 func InitDB() {
 	var err error
 
-	DB, err = sql.Open("sqlite3", dbPath)
+	DB, err = gorm.Open(sqlite.Open("task.db"), &gorm.Config{})
 	if err != nil {
 		log.Fatal("DB接続失敗：", err)
 	}
 
-	createTable := `
-    CREATE TABLE IF NOT EXISTS tasks (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        title TEXT NOT NULL,
-        status TEXT NOT NULL DEFAULT 'pending',
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-    );
-    `
-
-	_, err = DB.Exec(createTable)
+	err = DB.AutoMigrate(&model.Task{})
 	if err != nil {
-		log.Fatal("テーブル作成失敗:", err)
+		log.Fatal("マイグレーション失敗：", err)
 	}
 
-	fmt.Println("SQLite 初期化完了")
+	fmt.Println("SQLite(GORM) 初期化完了")
 
 }
