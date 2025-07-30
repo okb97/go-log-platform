@@ -8,7 +8,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/okb97/go-log-platform/db"
-	"github.com/okb97/go-log-platform/internal/repository"
 )
 
 func setupRouter() *gin.Engine {
@@ -22,7 +21,7 @@ func setupRouter() *gin.Engine {
 
 func TestGetAllTasksHandler(t *testing.T) {
 	db.InitDB()
-	repository.SeedTestData()
+	db.SeedTestData()
 
 	router := setupRouter()
 

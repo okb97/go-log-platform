@@ -5,13 +5,12 @@ import (
 	"testing"
 
 	"github.com/okb97/go-log-platform/db"
-	"github.com/okb97/go-log-platform/internal/repository"
 )
 
 func TestTaskService(t *testing.T) {
 
 	db.InitDB()
-	repository.SeedTestData()
+	db.SeedTestData()
 
 	results, err := GetAllTasks()
 	if err != nil {
