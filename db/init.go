@@ -29,3 +29,20 @@ func InitDB() {
 	fmt.Println("SQLite(GORM) 初期化完了")
 
 }
+
+func InitTestDB() *gorm.DB {
+	db, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{})
+	if err != nil {
+		log.Fatalf("failed to connect to test DB: %v", err)
+	}
+
+	err = db.AutoMigrate(
+		&model.Task{},
+	)
+	if err != nil {
+		log.Fatalf("failed to migrate test DB: %v", err)
+	}
+
+	return db
+
+}
