@@ -1,4 +1,4 @@
-package service
+package repository
 
 import (
 	"testing"
@@ -8,7 +8,7 @@ import (
 	"github.com/okb97/go-log-platform/internal/model"
 )
 
-func TestTaskService(t *testing.T) {
+func TestGetAllTasks(t *testing.T) {
 	testDB := db.InitTestDB()
 	db.DB = testDB
 
