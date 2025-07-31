@@ -7,8 +7,6 @@ import (
 
 func main() {
 	db.InitDB()
-	db.SeedTestData()
-
 	r := router.TaskRouter()
 
 	r.Run(":8080")
