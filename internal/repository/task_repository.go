@@ -14,3 +14,7 @@ func GetAllTasks() ([]model.Task, error) {
 
 	return tasks, nil
 }
+
+func CreateTask(task *model.Task) error {
+	return db.DB.Create(&task).Error
+}
