@@ -3,6 +3,7 @@ package router
 import (
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 
@@ -10,7 +11,7 @@ import (
 	"github.com/okb97/go-log-platform/internal/model"
 )
 
-func TestTaskRouter(t *testing.T) {
+func TestGetAllTasksRouter(t *testing.T) {
 	testDB := db.InitTestDB()
 	db.DB = testDB
 
@@ -31,4 +32,34 @@ func TestTaskRouter(t *testing.T) {
 	if w.Code != http.StatusOK {
 		t.Errorf("expecter status 200, got %d", w.Code)
 	}
+}
+
+func TestCreateTaskRouter(t *testing.T) {
+	testDB := db.InitTestDB()
+	db.DB = testDB
+
+	router := TaskRouter()
+
+	jsonStr := `{"title":"テストタスク","status":"pending"}`
+	req, err := http.NewRequest(http.MethodPost, "/api/task", strings.NewReader(jsonStr))
+	if err != nil {
+		t.Fatalf("Failed to create request: %v", err)
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+
+	w := httptest.NewRecorder()
+
+	router.ServeHTTP(w, req)
+
+	if w.Code != http.StatusCreated {
+		t.Errorf("Expected status %d but got %d", http.StatusCreated, w.Code)
+	}
+
+	body := w.Body.String()
+
+	if !strings.Contains(body, "テストタスク") {
+		t.Errorf("Response body does not contain expected task title, got: %s", body)
+	}
+
 }

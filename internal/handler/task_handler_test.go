@@ -17,8 +17,8 @@ func setupRouter() *gin.Engine {
 	gin.SetMode(gin.TestMode)
 	r := gin.Default()
 
-	r.GET("/tasks", GetAllTasksHandler)
-	r.POST("/task", CreateTaskHandler)
+	r.GET("/api/tasks", GetAllTasksHandler)
+	r.POST("/api/task", CreateTaskHandler)
 
 	return r
 }
@@ -37,7 +37,7 @@ func TestGetAllTasksHandler(t *testing.T) {
 
 	router := setupRouter()
 
-	req, _ := http.NewRequest(http.MethodGet, "/tasks", nil)
+	req, _ := http.NewRequest(http.MethodGet, "/api/tasks", nil)
 	w := httptest.NewRecorder()
 	router.ServeHTTP(w, req)
 
@@ -64,7 +64,7 @@ func TestCreateTaskHandler(t *testing.T) {
 
 	jsonStr := `{"title":"テストタスク","status":"pending"}`
 
-	req, err := http.NewRequest(http.MethodPost, "/task", strings.NewReader(jsonStr))
+	req, err := http.NewRequest(http.MethodPost, "/api/task", strings.NewReader(jsonStr))
 	if err != nil {
 		t.Fatalf("Failed to create request: %v", err)
 	}
