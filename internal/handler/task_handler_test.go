@@ -17,7 +17,8 @@ func setupRouter() *gin.Engine {
 	gin.SetMode(gin.TestMode)
 	r := gin.Default()
 
-	r.GET("/tasks", GetAllTasksHandler)
+	r.GET("/api/tasks", GetAllTasksHandler)
+	r.POST("/api/task", CreateTaskHandler)
 
 	return r
 }
@@ -36,7 +37,7 @@ func TestGetAllTasksHandler(t *testing.T) {
 
 	router := setupRouter()
 
-	req, _ := http.NewRequest(http.MethodGet, "/tasks", nil)
+	req, _ := http.NewRequest(http.MethodGet, "/api/tasks", nil)
 	w := httptest.NewRecorder()
 	router.ServeHTTP(w, req)
 
@@ -52,5 +53,32 @@ func TestGetAllTasksHandler(t *testing.T) {
 
 	if !strings.Contains(bodyStr, "散歩") || !strings.Contains(bodyStr, "料理") {
 		t.Errorf("response body missing expected task titles, got: %s", bodyStr)
+	}
+}
+
+func TestCreateTaskHandler(t *testing.T) {
+	testDB := db.InitTestDB()
+	db.DB = testDB
+
+	router := setupRouter()
+
+	jsonStr := `{"title":"テストタスク","status":"pending"}`
+
+	req, err := http.NewRequest(http.MethodPost, "/api/task", strings.NewReader(jsonStr))
+	if err != nil {
+		t.Fatalf("Failed to create request: %v", err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+
+	if w.Code != http.StatusCreated {
+		t.Errorf("Expected status %d but got %d", http.StatusCreated, w.Code)
+	}
+
+	body := w.Body.String()
+	if !strings.Contains(body, "テストタスク") {
+		t.Errorf("Response body does not contain expected task title, got: %s", body)
 	}
 }

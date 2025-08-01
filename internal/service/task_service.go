@@ -8,3 +8,7 @@ import (
 func GetAllTasks() ([]model.Task, error) {
 	return repository.GetAllTasks()
 }
+
+func CreateTask(task *model.Task) error {
+	return repository.CreateTask(task)
+}
