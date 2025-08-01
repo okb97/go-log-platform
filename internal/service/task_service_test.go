@@ -46,3 +46,31 @@ func TestTaskService(t *testing.T) {
 	}
 
 }
+
+func TestCreateTask(t *testing.T) {
+	testDB := db.InitTestDB()
+	db.DB = testDB
+
+	task := model.Task{
+		Title:     "テストタスク",
+		Status:    "pending",
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+	}
+
+	if err := CreateTask(&task); err != nil {
+		t.Fatalf("CreateTask() returned error: %v", err)
+	}
+
+	var got model.Task
+	if err := testDB.First(&got, task.ID).Error; err != nil {
+		t.Fatalf("Failed to fetch created task: %v", err)
+	}
+
+	if got.Title != task.Title {
+		t.Errorf("Expected Title %q but got %q", task.Title, got.Title)
+	}
+	if got.Status != task.Status {
+		t.Errorf("Expected Status %q but got %q", task.Status, got.Status)
+	}
+}
