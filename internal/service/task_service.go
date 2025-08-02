@@ -12,3 +12,7 @@ func GetAllTasks() ([]model.Task, error) {
 func CreateTask(task *model.Task) error {
 	return repository.CreateTask(task)
 }
+
+func DeleteTask(id uint) error {
+	return repository.DeleteTask(id)
+}
