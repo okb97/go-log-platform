@@ -2,6 +2,7 @@ package handler
 
 import (
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/okb97/go-log-platform/internal/model"
@@ -31,4 +32,19 @@ func CreateTaskHandler(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusCreated, task)
+}
+
+func DeleteTaskHandler(c *gin.Context) {
+	idStr := c.Param("id")
+	id, err := strconv.ParseUint(idStr, 10, 32)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "無効なIDです"})
+		return
+	}
+	if err := service.DeleteTask(uint(id)); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "タスクの削除に失敗しました"})
+		return
+	}
+
+	c.Status(http.StatusNoContent)
 }
