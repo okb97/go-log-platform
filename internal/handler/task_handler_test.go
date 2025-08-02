@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -19,6 +20,7 @@ func setupRouter() *gin.Engine {
 
 	r.GET("/api/tasks", GetAllTasksHandler)
 	r.POST("/api/task", CreateTaskHandler)
+	r.DELETE("/api/tasks/:id", DeleteTaskHandler)
 
 	return r
 }
@@ -80,5 +82,34 @@ func TestCreateTaskHandler(t *testing.T) {
 	body := w.Body.String()
 	if !strings.Contains(body, "テストタスク") {
 		t.Errorf("Response body does not contain expected task title, got: %s", body)
+	}
+}
+
+func TestDeleteTaskHandler(t *testing.T) {
+	testDB := db.InitTestDB()
+	db.DB = testDB
+
+	task := model.Task{
+		Title: "散歩", Status: "pending", CreatedAt: time.Now(), UpdatedAt: time.Now(),
+	}
+	if err := db.DB.Create(&task).Error; err != nil {
+		t.Fatalf("failed to seed test data: %v", err)
+	}
+
+	router := setupRouter()
+
+	url := fmt.Sprintf("/api/tasks/%d", task.ID)
+	req, _ := http.NewRequest(http.MethodDelete, url, nil)
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+
+	if w.Code != http.StatusNoContent {
+		t.Errorf("Expected status %d but got %d", http.StatusNoContent, w.Code)
+	}
+
+	var deleted model.Task
+	err := testDB.First(&deleted, task.ID).Error
+	if err == nil {
+		t.Errorf("Expected task to be deleted, but it still exists")
 	}
 }
