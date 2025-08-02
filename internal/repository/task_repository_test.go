@@ -74,3 +74,29 @@ func TestCreateTask(t *testing.T) {
 		t.Errorf("Expected Status %q but got %q", task.Status, got.Status)
 	}
 }
+
+func TestDeleteTask(t *testing.T) {
+	testDB := db.InitTestDB()
+	db.DB = testDB
+
+	task := model.Task{
+		Title:     "削除テストタスク",
+		Status:    "pending",
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+	}
+
+	if err := testDB.Create(&task).Error; err != nil {
+		t.Fatalf("タスクの作成に失敗しました: %v", err)
+	}
+
+	if err := DeleteTask(task.ID); err != nil {
+		t.Fatalf("DeleteTask() エラー：%v", err)
+	}
+
+	var deleted model.Task
+	err := testDB.First(&deleted, task.ID).Error
+	if err == nil {
+		t.Errorf("タスクが削除されていません")
+	}
+}
