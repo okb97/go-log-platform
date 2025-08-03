@@ -10,5 +10,6 @@ func TaskRouter() *gin.Engine {
 	r := gin.Default()
 	r.GET("/api/tasks", handler.GetAllTasksHandler)
 	r.POST("/api/task", handler.CreateTaskHandler)
+	r.DELETE("/api/tasks/:id", handler.DeleteTaskHandler)
 	return r
 }
