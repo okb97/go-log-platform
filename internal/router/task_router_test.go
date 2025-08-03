@@ -1,6 +1,7 @@
 package router
 
 import (
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -60,6 +61,32 @@ func TestCreateTaskRouter(t *testing.T) {
 
 	if !strings.Contains(body, "テストタスク") {
 		t.Errorf("Response body does not contain expected task title, got: %s", body)
+	}
+
+}
+
+func TestDeleteTaskRouter(t *testing.T) {
+	testDB := db.InitTestDB()
+	db.DB = testDB
+
+	task := model.Task{
+		Title: "散歩", Status: "pending", CreatedAt: time.Now(), UpdatedAt: time.Now(),
+	}
+	if err := db.DB.Create(&task).Error; err != nil {
+		t.Fatalf("failed to seed test data: %v", err)
+	}
+
+	router := TaskRouter()
+
+	url := fmt.Sprintf("/api/tasks/%d", task.ID)
+	req, _ := http.NewRequest(http.MethodDelete, url, nil)
+
+	w := httptest.NewRecorder()
+
+	router.ServeHTTP(w, req)
+
+	if w.Code != http.StatusNoContent {
+		t.Errorf("DELETE /api/tasks/:id: expected 204 No Content, got %d", w.Code)
 	}
 
 }
