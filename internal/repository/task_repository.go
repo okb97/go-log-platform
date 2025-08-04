@@ -31,3 +31,10 @@ func DeleteTask(id uint) error {
 	}
 	return nil
 }
+
+func UpdateTask(task *model.Task) error {
+	return db.DB.Model(&model.Task{}).
+		Where("id = ?", task.ID).
+		Omit("CreatedAt").
+		Updates(task).Error
+}
