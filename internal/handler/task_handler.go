@@ -48,3 +48,20 @@ func DeleteTaskHandler(c *gin.Context) {
 
 	c.Status(http.StatusNoContent)
 }
+
+func UpdateTaskHandler(c *gin.Context) {
+	var task model.Task
+
+	if err := c.ShouldBindJSON(&task); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	if err := service.UpdateTask(&task); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to update task"})
+		return
+	}
+
+	c.JSON(http.StatusCreated, task)
+
+}

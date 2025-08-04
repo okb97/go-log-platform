@@ -21,6 +21,7 @@ func setupRouter() *gin.Engine {
 	r.GET("/api/tasks", GetAllTasksHandler)
 	r.POST("/api/task", CreateTaskHandler)
 	r.DELETE("/api/tasks/:id", DeleteTaskHandler)
+	r.PUT("/api/tasks/:id", UpdateTaskHandler)
 
 	return r
 }
@@ -111,5 +112,40 @@ func TestDeleteTaskHandler(t *testing.T) {
 	err := testDB.First(&deleted, task.ID).Error
 	if err == nil {
 		t.Errorf("Expected task to be deleted, but it still exists")
+	}
+}
+
+func TestUpdateTaskHandler(t *testing.T) {
+	testDB := db.InitTestDB()
+	db.DB = testDB
+
+	task := model.Task{
+		Title: "散歩", Status: "pending", CreatedAt: time.Now(), UpdatedAt: time.Now(),
+	}
+	if err := db.DB.Create(&task).Error; err != nil {
+		t.Fatalf("failed to seed test data: %v", err)
+	}
+
+	router := setupRouter()
+
+	jsonStr := `{"title":"テストタスク","status":"pending"}`
+
+	url := fmt.Sprintf("/api/tasks/%d", task.ID)
+	req, err := http.NewRequest(http.MethodPut, url, strings.NewReader(jsonStr))
+	if err != nil {
+		t.Fatalf("Failed to create request: %v", err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+
+	w := httptest.NewRecorder()
+	router.ServeHTTP(w, req)
+
+	if w.Code != http.StatusCreated {
+		t.Errorf("Expected status %d but got %d", http.StatusCreated, w.Code)
+	}
+
+	body := w.Body.String()
+	if !strings.Contains(body, "テストタスク") {
+		t.Errorf("Response body does not contain expected task title, got: %s", body)
 	}
 }
