@@ -90,3 +90,35 @@ func TestDeleteTaskRouter(t *testing.T) {
 	}
 
 }
+
+func TestUpdateTaskRouter(t *testing.T) {
+	testDB := db.InitTestDB()
+	db.DB = testDB
+
+	task := model.Task{
+		Title: "散歩", Status: "pending", CreatedAt: time.Now(), UpdatedAt: time.Now(),
+	}
+	if err := db.DB.Create(&task).Error; err != nil {
+		t.Fatalf("failed to seed test data: %v", err)
+	}
+
+	router := TaskRouter()
+
+	jsonStr := `{"title":"テストタスク","status":"pending"}`
+
+	url := fmt.Sprintf("/api/tasks/%d", task.ID)
+	req, err := http.NewRequest(http.MethodPut, url, strings.NewReader(jsonStr))
+	if err != nil {
+		t.Fatalf("Failed to create request: %v", err)
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+
+	w := httptest.NewRecorder()
+
+	router.ServeHTTP(w, req)
+
+	if w.Code != http.StatusNoContent {
+		t.Errorf("UPDATE /api/tasks/:id: expected 204 No Content, got %d", w.Code)
+	}
+}
