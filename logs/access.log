@@ -1,0 +1,4 @@
+TimeStamp,Level,Message
+2025-07-07 10:00:00,INFO,User logged in successfully
+2025-07-07 10:05:10,WARN,Low disk space warning
+2025-07-07 10:10:22,ERROR,Failed to open file config.yaml
