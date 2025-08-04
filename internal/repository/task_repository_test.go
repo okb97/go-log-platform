@@ -100,3 +100,39 @@ func TestDeleteTask(t *testing.T) {
 		t.Errorf("タスクが削除されていません")
 	}
 }
+
+func TestUpdateTask(t *testing.T) {
+	testDB := db.InitTestDB()
+	db.DB = testDB
+
+	task := model.Task{
+		Title:     "更新前テストタスク",
+		Status:    "pending",
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+	}
+
+	if err := testDB.Create(&task).Error; err != nil {
+		t.Fatalf("タスクの作成に失敗しました: %v", err)
+	}
+
+	task.Title = "更新後テストタスク"
+	task.UpdatedAt = time.Now()
+
+	if err := UpdateTask(&task); err != nil {
+		t.Fatalf("タスクの更新に失敗しました: %v", err)
+	}
+
+	var got model.Task
+	if err := testDB.First(&got, task.ID).Error; err != nil {
+		t.Fatalf("Failed to fetch created task: %v", err)
+	}
+
+	if got.Title != task.Title {
+		t.Errorf("Expected Title %q but got %q", task.Title, got.Title)
+	}
+	if got.Status != task.Status {
+		t.Errorf("Expected Status %q but got %q", task.Status, got.Status)
+	}
+
+}
