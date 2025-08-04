@@ -29,22 +29,22 @@
 ```
 POST   /api/tasks          - タスク作成
 GET    /api/tasks          - タスク一覧取得
+GET    /api/tasks/:id      - タスク取得
 PUT    /api/tasks/:id      - タスク更新
 DELETE /api/tasks/:id      - タスク削除
-GET    /api/reports/daily  - 日次レポート取得
 ```
 
 **主要機能**:
-- SQLiteでのデータ永続化
+- GORMを利用したSQLiteでのデータ永続化
 - RESTful API設計
 - JSON形式でのデータ交換
-- 基本的な認証機能（APIキー）
-- 入力値バリデーション
+- MVCを意識したレイヤードアーキテクチャ（handler, service, repository）
+- go-ginを利用したルーティング
 
 **習得技術**:
-- HTTP サーバー構築（net/http）
+- Webサーバー構築（gin）
 - JSON エンコード/デコード
-- データベース操作（database/sql）
+- ORM（GORM）
 - SQLiteの基本操作
 - ルーティング設計
-- 認証・認可の基礎
+- テスト（ユニットテスト）
