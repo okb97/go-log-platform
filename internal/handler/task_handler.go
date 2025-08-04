@@ -50,18 +50,25 @@ func DeleteTaskHandler(c *gin.Context) {
 }
 
 func UpdateTaskHandler(c *gin.Context) {
-	var task model.Task
+	idStr := c.Param("id")
+	id, err := strconv.ParseUint(idStr, 10, 32)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "無効なIDです"})
+		return
+	}
 
+	var task model.Task
 	if err := c.ShouldBindJSON(&task); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+	task.ID = uint(id)
 
 	if err := service.UpdateTask(&task); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to update task"})
 		return
 	}
 
-	c.JSON(http.StatusCreated, task)
+	c.Status(http.StatusNoContent)
 
 }
