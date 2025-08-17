@@ -1,44 +1,71 @@
 package handler
 
 import (
-	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/okb97/go-log-platform/db"
 	"github.com/okb97/go-log-platform/internal/model"
+	"github.com/okb97/go-log-platform/internal/service"
 )
 
-func setupRouter() *gin.Engine {
+type MockTaskService struct {
+	Tasks []model.Task
+}
+
+func (m *MockTaskService) GetAllTasks() ([]model.Task, error) {
+	return m.Tasks, nil
+}
+
+func (m *MockTaskService) CreateTask(task *model.Task) error {
+	task.ID = uint(len(m.Tasks) + 1)
+	m.Tasks = append(m.Tasks, *task)
+	return nil
+}
+
+func (m *MockTaskService) DeleteTask(id uint) error {
+	for i, t := range m.Tasks {
+		if t.ID == id {
+			m.Tasks = append(m.Tasks[:i], m.Tasks[i+1:]...)
+			return nil
+		}
+	}
+	return nil
+}
+
+func (m *MockTaskService) UpdateTask(task *model.Task) error {
+	for i, t := range m.Tasks {
+		if t.ID == task.ID {
+			m.Tasks[i] = *task
+			return nil
+		}
+	}
+	return nil
+}
+func setupRouterWithService(taskService service.TaskServiceInterface) *gin.Engine {
 	gin.SetMode(gin.TestMode)
 	r := gin.Default()
+	handler := NewTaskHandler(taskService)
 
-	r.GET("/api/tasks", GetAllTasksHandler)
-	r.POST("/api/task", CreateTaskHandler)
-	r.DELETE("/api/tasks/:id", DeleteTaskHandler)
-	r.PUT("/api/tasks/:id", UpdateTaskHandler)
+	r.GET("/api/tasks", handler.GetAllTasksHandler)
+	r.POST("/api/task", handler.CreateTaskHandler)
+	r.DELETE("/api/tasks/:id", handler.DeleteTaskHandler)
+	r.PUT("/api/tasks/:id", handler.UpdateTaskHandler)
 
 	return r
 }
 
 func TestGetAllTasksHandler(t *testing.T) {
-	testDB := db.InitTestDB()
-	db.DB = testDB
-
-	tasks := []model.Task{
-		{Title: "散歩", Status: "pending", CreatedAt: time.Now(), UpdatedAt: time.Now()},
-		{Title: "料理", Status: "completed", CreatedAt: time.Now(), UpdatedAt: time.Now()},
+	mockService := &MockTaskService{
+		Tasks: []model.Task{
+			{ID: 1, Title: "散歩", Status: "pending"},
+			{ID: 2, Title: "料理", Status: "completed"},
+		},
 	}
-	if err := db.DB.Create(&tasks).Error; err != nil {
-		t.Fatalf("failed to seed test data: %v", err)
-	}
-
-	router := setupRouter()
+	router := setupRouterWithService(mockService)
 
 	req, _ := http.NewRequest(http.MethodGet, "/api/tasks", nil)
 	w := httptest.NewRecorder()
@@ -50,27 +77,17 @@ func TestGetAllTasksHandler(t *testing.T) {
 
 	body, _ := io.ReadAll(w.Body)
 	bodyStr := string(body)
-	if len(bodyStr) == 0 {
-		t.Error("expected non-empty body")
-	}
-
 	if !strings.Contains(bodyStr, "散歩") || !strings.Contains(bodyStr, "料理") {
 		t.Errorf("response body missing expected task titles, got: %s", bodyStr)
 	}
 }
 
 func TestCreateTaskHandler(t *testing.T) {
-	testDB := db.InitTestDB()
-	db.DB = testDB
-
-	router := setupRouter()
+	mockService := &MockTaskService{}
+	router := setupRouterWithService(mockService)
 
 	jsonStr := `{"title":"テストタスク","status":"pending"}`
-
-	req, err := http.NewRequest(http.MethodPost, "/api/task", strings.NewReader(jsonStr))
-	if err != nil {
-		t.Fatalf("Failed to create request: %v", err)
-	}
+	req, _ := http.NewRequest(http.MethodPost, "/api/task", strings.NewReader(jsonStr))
 	req.Header.Set("Content-Type", "application/json")
 
 	w := httptest.NewRecorder()
@@ -80,27 +97,20 @@ func TestCreateTaskHandler(t *testing.T) {
 		t.Errorf("Expected status %d but got %d", http.StatusCreated, w.Code)
 	}
 
-	body := w.Body.String()
-	if !strings.Contains(body, "テストタスク") {
-		t.Errorf("Response body does not contain expected task title, got: %s", body)
+	if len(mockService.Tasks) != 1 || mockService.Tasks[0].Title != "テストタスク" {
+		t.Errorf("Task was not created correctly in service")
 	}
 }
 
 func TestDeleteTaskHandler(t *testing.T) {
-	testDB := db.InitTestDB()
-	db.DB = testDB
-
-	task := model.Task{
-		Title: "散歩", Status: "pending", CreatedAt: time.Now(), UpdatedAt: time.Now(),
+	mockService := &MockTaskService{
+		Tasks: []model.Task{
+			{ID: 1, Title: "散歩", Status: "pending"},
+		},
 	}
-	if err := db.DB.Create(&task).Error; err != nil {
-		t.Fatalf("failed to seed test data: %v", err)
-	}
+	router := setupRouterWithService(mockService)
 
-	router := setupRouter()
-
-	url := fmt.Sprintf("/api/tasks/%d", task.ID)
-	req, _ := http.NewRequest(http.MethodDelete, url, nil)
+	req, _ := http.NewRequest(http.MethodDelete, "/api/tasks/1", nil)
 	w := httptest.NewRecorder()
 	router.ServeHTTP(w, req)
 
@@ -108,44 +118,31 @@ func TestDeleteTaskHandler(t *testing.T) {
 		t.Errorf("Expected status %d but got %d", http.StatusNoContent, w.Code)
 	}
 
-	var deleted model.Task
-	err := testDB.First(&deleted, task.ID).Error
-	if err == nil {
-		t.Errorf("Expected task to be deleted, but it still exists")
+	if len(mockService.Tasks) != 0 {
+		t.Errorf("Task was not deleted in service")
 	}
 }
 
 func TestUpdateTaskHandler(t *testing.T) {
-	testDB := db.InitTestDB()
-	db.DB = testDB
-
-	task := model.Task{
-		Title: "散歩", Status: "pending", CreatedAt: time.Now(), UpdatedAt: time.Now(),
+	mockService := &MockTaskService{
+		Tasks: []model.Task{
+			{ID: 1, Title: "散歩", Status: "pending"},
+		},
 	}
-	if err := db.DB.Create(&task).Error; err != nil {
-		t.Fatalf("failed to seed test data: %v", err)
-	}
+	router := setupRouterWithService(mockService)
 
-	router := setupRouter()
-
-	jsonStr := `{"title":"テストタスク","status":"pending"}`
-
-	url := fmt.Sprintf("/api/tasks/%d", task.ID)
-	req, err := http.NewRequest(http.MethodPut, url, strings.NewReader(jsonStr))
-	if err != nil {
-		t.Fatalf("Failed to create request: %v", err)
-	}
+	jsonStr := `{"title":"更新タスク","status":"completed"}`
+	req, _ := http.NewRequest(http.MethodPut, "/api/tasks/1", strings.NewReader(jsonStr))
 	req.Header.Set("Content-Type", "application/json")
 
 	w := httptest.NewRecorder()
 	router.ServeHTTP(w, req)
 
-	if w.Code != http.StatusCreated {
-		t.Errorf("Expected status %d but got %d", http.StatusCreated, w.Code)
+	if w.Code != http.StatusNoContent {
+		t.Errorf("Expected status %d but got %d", http.StatusNoContent, w.Code)
 	}
 
-	body := w.Body.String()
-	if !strings.Contains(body, "テストタスク") {
-		t.Errorf("Response body does not contain expected task title, got: %s", body)
+	if mockService.Tasks[0].Title != "更新タスク" || mockService.Tasks[0].Status != "completed" {
+		t.Errorf("Task was not updated in service")
 	}
 }
