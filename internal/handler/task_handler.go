@@ -9,8 +9,16 @@ import (
 	"github.com/okb97/go-log-platform/internal/service"
 )
 
-func GetAllTasksHandler(c *gin.Context) {
-	tasks, err := service.GetAllTasks()
+type TaskHandler struct {
+	service service.TaskServiceInterface
+}
+
+func NewTaskHandler(service service.TaskServiceInterface) *TaskHandler {
+	return &TaskHandler{service: service}
+}
+
+func (h *TaskHandler) GetAllTasksHandler(c *gin.Context) {
+	tasks, err := h.service.GetAllTasks()
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "タスク一覧の取得に失敗しました"})
 		return
@@ -18,7 +26,7 @@ func GetAllTasksHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, tasks)
 }
 
-func CreateTaskHandler(c *gin.Context) {
+func (h *TaskHandler) CreateTaskHandler(c *gin.Context) {
 	var task model.Task
 
 	if err := c.ShouldBindJSON(&task); err != nil {
@@ -26,7 +34,7 @@ func CreateTaskHandler(c *gin.Context) {
 		return
 	}
 
-	if err := service.CreateTask(&task); err != nil {
+	if err := h.service.CreateTask(&task); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to create task"})
 		return
 	}
@@ -34,14 +42,14 @@ func CreateTaskHandler(c *gin.Context) {
 	c.JSON(http.StatusCreated, task)
 }
 
-func DeleteTaskHandler(c *gin.Context) {
+func (h *TaskHandler) DeleteTaskHandler(c *gin.Context) {
 	idStr := c.Param("id")
 	id, err := strconv.ParseUint(idStr, 10, 32)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "無効なIDです"})
 		return
 	}
-	if err := service.DeleteTask(uint(id)); err != nil {
+	if err := h.service.DeleteTask(uint(id)); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "タスクの削除に失敗しました"})
 		return
 	}
@@ -49,7 +57,7 @@ func DeleteTaskHandler(c *gin.Context) {
 	c.Status(http.StatusNoContent)
 }
 
-func UpdateTaskHandler(c *gin.Context) {
+func (h *TaskHandler) UpdateTaskHandler(c *gin.Context) {
 	idStr := c.Param("id")
 	id, err := strconv.ParseUint(idStr, 10, 32)
 	if err != nil {
@@ -64,7 +72,7 @@ func UpdateTaskHandler(c *gin.Context) {
 	}
 	task.ID = uint(id)
 
-	if err := service.UpdateTask(&task); err != nil {
+	if err := h.service.UpdateTask(&task); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to update task"})
 		return
 	}
