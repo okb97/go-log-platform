@@ -1,5 +1,5 @@
 package repository
 
-func SaveLogs(body []byte) error {
-	return nil
+type LogRepository interface {
+	SaveLogs(body []byte) error
 }
