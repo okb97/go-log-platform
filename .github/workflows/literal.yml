@@ -1,10 +1,11 @@
 name: Literals
 on: push
 jobs:
-  runs-on: ubuntu-latest
-  steps:
-    - run: printenv | grep 'LITERAL_'
-      env:
-        LITERAL_NULL: ${{ null }}
-        LITERAL_BOOLEAN: ${{ true }}
-        LTTERAL_NUMBER: ${{ 1234 }}
+  print:
+    runs-on: ubuntu-latest
+    steps:
+      - run: printenv | grep 'LITERAL_'
+        env:
+          LITERAL_NULL: ${{ null }}
+          LITERAL_BOOLEAN: ${{ true }}
+          LTTERAL_NUMBER: ${{ 1234 }}
