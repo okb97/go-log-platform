@@ -1,6 +1,6 @@
 name: 2.1 Hello
 on:
-  workflow_dispatch
+  workflow_dispatch:
     inputs:
       gretting:
         type: string
