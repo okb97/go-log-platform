@@ -1,14 +1,8 @@
 name: 2.1 Hello
-on:
-  workflow_dispatch:
-    inputs:
-      gretting:
-        type: string
-        default: Hello
-        required: true
-        description: A cheerful word
+on: push
 jobs:
   hello:
     runs-on: ubuntu-latest
     steps:
-      - run: echo "${{inputs.gretting}}"
+      - run: echo "Hello,world"
+      - uses: actions/checkout@v4
