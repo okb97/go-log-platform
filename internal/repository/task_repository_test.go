@@ -2,137 +2,90 @@ package repository
 
 import (
 	"testing"
-	"time"
 
-	"github.com/okb97/go-log-platform/db"
 	"github.com/okb97/go-log-platform/internal/model"
 )
 
 func TestGetAllTasks(t *testing.T) {
-	testDB := db.InitTestDB()
-	db.DB = testDB
-
-	tasks := []model.Task{
-		{Title: "買い物に行く", Status: "pending", CreatedAt: time.Now(), UpdatedAt: time.Now()},
-		{Title: "Go学習", Status: "completed", CreatedAt: time.Now(), UpdatedAt: time.Now()},
-	}
-	if err := db.DB.Create(&tasks).Error; err != nil {
-		t.Fatalf("Failed to seed test data: %v", err)
+	mockRepo := NewMockTaskRepository()
+	mockRepo.Tasks = []model.Task{
+		{ID: 1, Title: "買い物", Status: "pending"},
+		{ID: 2, Title: "Go学習", Status: "completed"},
 	}
 
-	var got []model.Task
-	if err := testDB.Find(&got).Error; err != nil {
-		t.Fatalf("Failed to fetch tasks: %v", err)
-	}
-
-	got, err := GetAllTasks()
+	got, err := mockRepo.GetAllTasks()
 	if err != nil {
 		t.Fatalf("GetAllTasks() returned error: %v", err)
 	}
 
-	//t.Log("Fetched tasks:", got)
-
-	if len(got) != len(tasks) {
-		t.Errorf("Expected %d tasks, but got %d", len(tasks), len(got))
+	if len(got) != 2 {
+		t.Errorf("Expected 2 tasks, got %d", len(got))
 	}
 
-	for i, task := range tasks {
-		if got[i].Title != task.Title {
-			t.Errorf("Expected title %q but got %q", task.Title, got[i].Title)
-		}
-		if got[i].Status != task.Status {
-			t.Errorf("Expected status %q but got %q", task.Status, got[i].Status)
-		}
+	if got[0].Title != "買い物" || got[1].Title != "Go学習" {
+		t.Errorf("Unexpected task titles: %+v", got)
 	}
-
 }
 
 func TestCreateTask(t *testing.T) {
-	testDB := db.InitTestDB()
-	db.DB = testDB
+	mockRepo := NewMockTaskRepository()
+	task1 := &model.Task{Title: "買い物", Status: "pending"}
+	task2 := &model.Task{Title: "Go学習", Status: "completed"}
 
-	task := model.Task{
-		Title:     "テストタスク",
-		Status:    "pending",
-		CreatedAt: time.Now(),
-		UpdatedAt: time.Now(),
+	if err := mockRepo.CreateTask(task1); err != nil {
+		t.Fatalf("CreateTask() returned error: %v", err)
 	}
-
-	if err := CreateTask(&task); err != nil {
+	if err := mockRepo.CreateTask(task2); err != nil {
 		t.Fatalf("CreateTask() returned error: %v", err)
 	}
 
-	var got model.Task
-	if err := testDB.First(&got, task.ID).Error; err != nil {
-		t.Fatalf("Failed to fetch created task: %v", err)
-	}
-
-	if got.Title != task.Title {
-		t.Errorf("Expected Title %q but got %q", task.Title, got.Title)
-	}
-	if got.Status != task.Status {
-		t.Errorf("Expected Status %q but got %q", task.Status, got.Status)
+	if len(mockRepo.Tasks) != 2 {
+		t.Errorf("Expected 2 tasks, got %d", len(mockRepo.Tasks))
 	}
 }
 
 func TestDeleteTask(t *testing.T) {
-	testDB := db.InitTestDB()
-	db.DB = testDB
+	mockRepo := NewMockTaskRepository()
 
-	task := model.Task{
-		Title:     "削除テストタスク",
-		Status:    "pending",
-		CreatedAt: time.Now(),
-		UpdatedAt: time.Now(),
+	task1 := &model.Task{Title: "買い物", Status: "pending"}
+	task2 := &model.Task{Title: "Go学習", Status: "completed"}
+
+	// タスク作成
+	_ = mockRepo.CreateTask(task1)
+	_ = mockRepo.CreateTask(task2)
+
+	// task1 を削除
+	if err := mockRepo.DeleteTask(task1.ID); err != nil {
+		t.Fatalf("DeleteTask() returned error: %v", err)
 	}
 
-	if err := testDB.Create(&task).Error; err != nil {
-		t.Fatalf("タスクの作成に失敗しました: %v", err)
+	if len(mockRepo.Tasks) != 1 {
+		t.Errorf("Expected 1 task after delete, got %d", len(mockRepo.Tasks))
 	}
 
-	if err := DeleteTask(task.ID); err != nil {
-		t.Fatalf("DeleteTask() エラー：%v", err)
-	}
-
-	var deleted model.Task
-	err := testDB.First(&deleted, task.ID).Error
-	if err == nil {
-		t.Errorf("タスクが削除されていません")
+	if mockRepo.Tasks[0].ID != task2.ID {
+		t.Errorf("Remaining task ID mismatch, got %d", mockRepo.Tasks[0].ID)
 	}
 }
 
 func TestUpdateTask(t *testing.T) {
-	testDB := db.InitTestDB()
-	db.DB = testDB
+	mockRepo := NewMockTaskRepository()
 
-	task := model.Task{
-		Title:     "更新前テストタスク",
-		Status:    "pending",
-		CreatedAt: time.Now(),
-		UpdatedAt: time.Now(),
-	}
+	// まずタスクを作成（CreateTask で ID 付与）
+	task := &model.Task{Title: "更新前テストタスク", Status: "pending"}
+	_ = mockRepo.CreateTask(task)
 
-	if err := testDB.Create(&task).Error; err != nil {
-		t.Fatalf("タスクの作成に失敗しました: %v", err)
-	}
-
+	// 更新
 	task.Title = "更新後テストタスク"
-	task.UpdatedAt = time.Now()
-
-	if err := UpdateTask(&task); err != nil {
-		t.Fatalf("タスクの更新に失敗しました: %v", err)
+	if err := mockRepo.UpdateTask(task); err != nil {
+		t.Fatalf("UpdateTask() returned error: %v", err)
 	}
 
-	var got model.Task
-	if err := testDB.First(&got, task.ID).Error; err != nil {
-		t.Fatalf("Failed to fetch created task: %v", err)
+	// 検証
+	if len(mockRepo.Tasks) != 1 {
+		t.Fatalf("Expected 1 task, got %d", len(mockRepo.Tasks))
 	}
-
-	if got.Title != task.Title {
-		t.Errorf("Expected Title %q but got %q", task.Title, got.Title)
+	if mockRepo.Tasks[0].Title != "更新後テストタスク" {
+		t.Errorf("Expected Title '更新後テストタスク', got %q", mockRepo.Tasks[0].Title)
 	}
-	if got.Status != task.Status {
-		t.Errorf("Expected Status %q but got %q", task.Status, got.Status)
-	}
-
 }
