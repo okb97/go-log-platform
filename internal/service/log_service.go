@@ -8,7 +8,7 @@ import (
 	"github.com/okb97/go-log-platform/internal/repository"
 )
 
-//test4_3.ymlの確認
+//test4_3.ymlの確認2
 
 type LogServiceInterface interface {
 	FetchLogs(serveURL string, logPath string) error
