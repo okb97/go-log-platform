@@ -1,6 +1,6 @@
 name: Environments
 on:
-  workflow_dispatch
+  workflow_dispatch:
     inputs:
       environment-name:
         type: environment
