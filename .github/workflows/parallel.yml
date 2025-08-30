@@ -1,0 +1,12 @@
+name: Pararel jobs
+on: push
+jobs:
+  first:
+    steps:
+      - run: sleep 10 && echo "First job"
+  second:
+    step:
+      - run sleep 10 && echo "Second job"
+  third:
+    step:
+      - run sleep 10 && echo "Third job"
