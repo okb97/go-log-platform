@@ -5,8 +5,8 @@ jobs:
     steps:
       - run: sleep 10 && echo "First job"
   second:
-    step:
+    steps:
       - run sleep 10 && echo "Second job"
   third:
-    step:
+    steps:
       - run sleep 10 && echo "Third job"
